@@ -140,7 +140,7 @@ function App() {
           <div className="mt-4 text-sm text-gray-500">
             今日剩余处理次数：5次
             <a
-              href="#"
+              href="/vip"
               className="ml-2 text-primary-600 hover:text-primary-500"
             >
               升级会员
