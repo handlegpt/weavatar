@@ -134,7 +134,6 @@ const Home: React.FC = () => {
         setSelectedImage(file);
         setPreviewUrl(URL.createObjectURL(file));
         setResultImage(null);
-        setWaitingForStyle(false);
         
         // 创建FormData对象
         const formData = new FormData();
@@ -146,31 +145,9 @@ const Home: React.FC = () => {
           if (customPrompt) formData.append('customPrompt', customPrompt);
           await processImage(formData);
         } else {
-          // 否则，只上传图片，等待用户选择风格或输入提示词
-          try {
-            setIsProcessing(true);
-            const response = await fetch('/api/process-image', {
-              method: 'POST',
-              body: formData
-            });
-            
-            if (!response.ok) {
-              throw new Error('Failed to upload image');
-            }
-            
-            const data = await response.json();
-            if (data.status === 'waiting_for_style') {
-              setWaitingForStyle(true);
-              toast.success(t.success.selectStyleOrPrompt);
-            } else {
-              toast.success(t.success.uploadSuccess);
-            }
-          } catch (error) {
-            console.error('Error uploading image:', error);
-            toast.error(t.errors.processFailed);
-          } finally {
-            setIsProcessing(false);
-          }
+          // 否则，显示风格选择界面
+          setWaitingForStyle(true);
+          toast.success(t.success.selectStyleOrPrompt);
         }
       }
     }, [selectedStyle, customPrompt, t, processImage])
