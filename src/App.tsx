@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
 import VipPlans from './components/VipPlans';
 
 function Home() {
@@ -170,10 +170,10 @@ function App() {
   console.log('App component rendered');
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/vip" element={<VipPlans />} />
-      </Routes>
+      <Switch>
+        <Route exact path="/" component={Home} />
+        <Route path="/vip" component={VipPlans} />
+      </Switch>
     </Router>
   );
 }
