@@ -31,7 +31,9 @@ export const translations = {
     },
     success: {
       processComplete: '处理成功！',
-      processing: '图片正在处理中，请稍候...'
+      processing: '图片正在处理中，请稍候...',
+      uploadSuccess: '图片上传成功',
+      selectStyleOrPrompt: '请选择风格或输入提示词'
     },
     vip: {
       title: '会员计划',
@@ -102,7 +104,9 @@ export const translations = {
     },
     success: {
       processComplete: 'Processing completed!',
-      processing: 'Processing in progress, please wait...'
+      processing: 'Processing in progress, please wait...',
+      uploadSuccess: 'Image uploaded successfully',
+      selectStyleOrPrompt: 'Please select a style or enter a prompt'
     },
     vip: {
       title: 'Membership Plans',
@@ -173,7 +177,9 @@ export const translations = {
     },
     success: {
       processComplete: '処理が完了しました！',
-      processing: '処理中です。しばらくお待ちください...'
+      processing: '処理中です。しばらくお待ちください...',
+      uploadSuccess: '画像のアップロードに成功しました',
+      selectStyleOrPrompt: 'スタイルを選択するか、プロンプトを入力してください'
     },
     vip: {
       title: 'メンバーシッププラン',

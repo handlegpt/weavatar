@@ -55,7 +55,8 @@ const errorMessages = {
     noImageData: '未找到图片数据',
     processingFailed: '图片处理失败，请稍后重试',
     taskNotFound: '任务不存在或已过期',
-    processing: '图片正在处理中，请稍候...'
+    processing: '图片正在处理中，请稍候...',
+    selectStyleOrPrompt: '请选择风格或输入提示词'
   },
   en: {
     noFile: 'Please upload an image',
@@ -68,7 +69,8 @@ const errorMessages = {
     noImageData: 'No image data found',
     processingFailed: 'Image processing failed, please try again later',
     taskNotFound: 'Task not found or expired',
-    processing: 'Processing in progress, please wait...'
+    processing: 'Processing in progress, please wait...',
+    selectStyleOrPrompt: 'Please select a style or enter a custom prompt'
   },
   ja: {
     noFile: '画像をアップロードしてください',
@@ -81,7 +83,8 @@ const errorMessages = {
     noImageData: '画像データが見つかりません',
     processingFailed: '画像処理に失敗しました。後でもう一度お試しください',
     taskNotFound: 'タスクが見つからないか、期限切れです',
-    processing: '処理中です。しばらくお待ちください...'
+    processing: '処理中です。しばらくお待ちください...',
+    selectStyleOrPrompt: 'スタイルを選択するか、カスタムプロンプトを入力してください'
   }
 };
 
@@ -123,9 +126,15 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
     const { style, customPrompt } = req.body;
     console.log('Request parameters:', { style, customPrompt });
 
+    // 如果没有提供风格或提示词，返回成功响应，但不开始处理
     if (!style && !customPrompt) {
-      console.error('No style or prompt provided');
-      return res.status(400).json({ error: getErrorMessage('noStyleOrPrompt', lang) });
+      console.log('No style or prompt provided, returning success without processing');
+      return res.json({
+        success: true,
+        message: getErrorMessage('selectStyleOrPrompt', lang),
+        status: 'waiting_for_style',
+        taskId: taskId
+      });
     }
 
     // 过滤和清理提示词
