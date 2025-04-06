@@ -102,19 +102,23 @@ const validateApiConfig = () => {
   console.log('Validating API configuration:', {
     hasApiKey: !!apiKey,
     apiKeyLength: apiKey ? apiKey.length : 0,
+    apiKeyPrefix: apiKey ? apiKey.substring(0, 7) + '...' : 'none',
     apiEndpoint,
     apiModel
   });
 
   if (!apiKey || apiKey === 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
-    throw new Error('API密钥未配置或使用了占位符');
+    console.error('API key is missing or using placeholder value');
+    throw new Error('API密钥未配置或使用了占位符，请设置正确的API密钥');
   }
 
   if (!apiEndpoint) {
+    console.error('API endpoint is missing');
     throw new Error('API端点未配置');
   }
 
   if (!apiModel) {
+    console.error('API model is missing');
     throw new Error('API模型未配置');
   }
 
