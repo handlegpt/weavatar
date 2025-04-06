@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
 import VipPlans from './components/VipPlans';
 import LanguageSelector from './components/LanguageSelector';
+import Login from './components/Login';
 import { translations } from './i18n/translations';
 
 function Home() {
@@ -186,6 +187,7 @@ function App() {
       <Switch>
         <Route exact path="/" component={Home} />
         <Route path="/vip" component={VipPlans} />
+        <Route path="/login" component={Login} />
       </Switch>
     </Router>
   );
