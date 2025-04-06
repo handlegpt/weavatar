@@ -5,9 +5,13 @@ import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
 import VipPlans from './components/VipPlans';
+import LanguageSelector from './components/LanguageSelector';
+import { translations } from './i18n/translations';
 
 function Home() {
   const history = useHistory();
+  const [currentLanguage, setCurrentLanguage] = useState('zh');
+  const t = translations[currentLanguage as keyof typeof translations];
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
@@ -31,12 +35,12 @@ function Home() {
 
   const handleProcess = async () => {
     if (!selectedFile) {
-      toast.error('请先选择图片');
+      toast.error(t.process.error);
       return;
     }
 
     try {
-      setProcessingStatus('处理中...');
+      setProcessingStatus(t.process.processing);
       setError(null);
 
       const formData = new FormData();
@@ -50,15 +54,15 @@ function Home() {
       });
 
       if (!response.ok) {
-        throw new Error('处理失败');
+        throw new Error(t.process.error);
       }
 
-      setProcessingStatus('处理完成');
-      toast.success('处理成功');
+      setProcessingStatus(t.process.success);
+      toast.success(t.process.success);
     } catch (error) {
-      setError(error instanceof Error ? error.message : '处理失败');
+      setError(error instanceof Error ? error.message : t.process.error);
       setProcessingStatus('');
-      toast.error('处理失败');
+      toast.error(t.process.error);
     }
   };
 
@@ -68,8 +72,12 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LanguageSelector
+        currentLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
+      />
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">weavatar</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">{t.title}</h1>
         
         <div className="bg-white shadow sm:rounded-lg p-6">
           <div
@@ -82,7 +90,7 @@ function Home() {
             {previewUrl ? (
               <img
                 src={previewUrl}
-                alt="预览"
+                alt="Preview"
                 className="max-h-64 mx-auto mb-4"
               />
             ) : (
@@ -90,50 +98,50 @@ function Home() {
             )}
             <p className="text-sm text-gray-600">
               {isDragActive
-                ? '放开以上传图片'
-                : '拖拽图片到此处，或点击选择图片'}
+                ? t.dropzone.dragActive
+                : t.dropzone.dragInactive}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              支持 JPG、PNG、GIF 格式，最大 5MB
+              {t.dropzone.formatHint}
             </p>
           </div>
 
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-700">
-              选择风格
+              {t.style.label}
             </label>
             <select
               value={selectedStyle}
               onChange={(e) => setSelectedStyle(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             >
-              <option value="">请选择风格</option>
-              <option value="anime">动漫风格</option>
-              <option value="oil">油画风格</option>
-              <option value="watercolor">水彩风格</option>
+              <option value="">{t.style.placeholder}</option>
+              <option value="anime">{t.style.options.anime}</option>
+              <option value="oil">{t.style.options.oil}</option>
+              <option value="watercolor">{t.style.options.watercolor}</option>
             </select>
           </div>
 
           <div className="mt-6">
             <label className="block text-sm font-medium text-gray-700">
-              自定义提示词（可选）
+              {t.prompt.label}
             </label>
             <textarea
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
               rows={3}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              placeholder="输入自定义提示词，例如：'make it more vibrant'"
+              placeholder={t.prompt.placeholder}
             />
           </div>
 
           <div className="mt-6">
             <button
               onClick={handleProcess}
-              disabled={!selectedFile || processingStatus === '处理中...'}
+              disabled={!selectedFile || processingStatus === t.process.processing}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
             >
-              {processingStatus || '开始处理'}
+              {processingStatus || t.process.button}
             </button>
           </div>
 
@@ -145,12 +153,12 @@ function Home() {
           )}
 
           <div className="mt-4 text-sm text-gray-500">
-            今日剩余处理次数：5次
+            {t.remaining}
             <button
               onClick={handleUpgradeClick}
               className="ml-2 text-primary-600 hover:text-primary-500"
             >
-              升级会员
+              {t.upgrade}
             </button>
           </div>
         </div>
@@ -163,7 +171,7 @@ function Home() {
             className="inline-flex items-center text-gray-500 hover:text-gray-700"
           >
             <FaGithub className="h-5 w-5 mr-2" />
-            GitHub
+            {t.github}
           </a>
         </div>
       </div>
