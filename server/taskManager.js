@@ -13,7 +13,8 @@ const createTask = () => {
     status: TaskStatus.PROCESSING,
     resultImage: null,
     error: null,
-    createdAt: new Date()
+    createdAt: new Date(),
+    lastUpdated: new Date()
   };
   tasks.set(taskId, task);
   console.log('Task Created:', { taskId, task });
@@ -26,7 +27,11 @@ const updateTask = (taskId, update) => {
     throw new Error('Task not found');
   }
   const oldTask = tasks.get(taskId);
-  const newTask = { ...oldTask, ...update };
+  const newTask = { 
+    ...oldTask, 
+    ...update,
+    lastUpdated: new Date()
+  };
   tasks.set(taskId, newTask);
   console.log('Task Updated:', {
     taskId,
@@ -39,9 +44,12 @@ const updateTask = (taskId, update) => {
 
 const getTask = (taskId) => {
   if (!tasks.has(taskId)) {
+    console.error('Task Get Failed: Task not found', { taskId });
     throw new Error('Task not found');
   }
-  return tasks.get(taskId);
+  const task = tasks.get(taskId);
+  console.log('Task Retrieved:', { taskId, task });
+  return task;
 };
 
 // 清理超过1小时的任务
