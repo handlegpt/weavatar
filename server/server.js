@@ -204,6 +204,14 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         while (retryCount < maxRetries) {
           try {
             response = await fetchWithRetry();
+            
+            // 检查响应内容类型
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('text/html')) {
+              console.error('Received HTML response instead of JSON:', await response.text());
+              throw new Error('服务器返回了非预期的响应格式');
+            }
+            
             if (response.ok) break;
             
             // 如果是服务器错误，等待后重试
@@ -244,11 +252,18 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         console.log('API Response Status:', response.status);
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
           throw new Error(`API request failed with status ${response.status}`);
         }
 
-        const result = await response.json();
-        console.log('API Response Data:', JSON.stringify(result, null, 2));
+        let result;
+        try {
+          result = await response.json();
+        } catch (error) {
+          console.error('Failed to parse API response as JSON:', error);
+          throw new Error('服务器返回了无效的JSON响应');
+        }
         
         // Process the API response and extract the generated image from choices
         let processedImage = null;
