@@ -54,7 +54,8 @@ const errorMessages = {
     invalidJson: '服务器返回了无效的JSON响应',
     noImageData: '未找到图片数据',
     processingFailed: '图片处理失败，请稍后重试',
-    taskNotFound: '任务不存在或已过期'
+    taskNotFound: '任务不存在或已过期',
+    processing: '图片正在处理中，请稍候...'
   },
   en: {
     noFile: 'Please upload an image',
@@ -66,7 +67,8 @@ const errorMessages = {
     invalidJson: 'Server returned invalid JSON response',
     noImageData: 'No image data found',
     processingFailed: 'Image processing failed, please try again later',
-    taskNotFound: 'Task not found or expired'
+    taskNotFound: 'Task not found or expired',
+    processing: 'Processing in progress, please wait...'
   },
   ja: {
     noFile: '画像をアップロードしてください',
@@ -78,7 +80,8 @@ const errorMessages = {
     invalidJson: 'サーバーが無効なJSONレスポンスを返しました',
     noImageData: '画像データが見つかりません',
     processingFailed: '画像処理に失敗しました。後でもう一度お試しください',
-    taskNotFound: 'タスクが見つからないか、期限切れです'
+    taskNotFound: 'タスクが見つからないか、期限切れです',
+    processing: '処理中です。しばらくお待ちください...'
   }
 };
 
@@ -189,7 +192,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
     // Send initial response with taskId to indicate processing started
     res.json({
       success: true,
-      message: '图片正在处理中，请稍候...',
+      message: getErrorMessage('processing', lang),
       status: 'processing',
       taskId: taskId
     });
