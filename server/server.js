@@ -42,6 +42,51 @@ const sanitizePrompt = (prompt) => {
   return sanitized;
 };
 
+// 错误消息多语言支持
+const errorMessages = {
+  zh: {
+    noFile: '请上传图片',
+    noStyleOrPrompt: '请选择风格或输入自定义提示词',
+    serverConfigError: '服务器配置错误，请联系管理员',
+    serverError: '服务器错误',
+    requestFailed: '请求失败',
+    invalidResponse: '服务器返回了非预期的响应格式',
+    invalidJson: '服务器返回了无效的JSON响应',
+    noImageData: '未找到图片数据',
+    processingFailed: '图片处理失败，请稍后重试',
+    taskNotFound: '任务不存在或已过期'
+  },
+  en: {
+    noFile: 'Please upload an image',
+    noStyleOrPrompt: 'Please select a style or enter a custom prompt',
+    serverConfigError: 'Server configuration error, please contact administrator',
+    serverError: 'Server error',
+    requestFailed: 'Request failed',
+    invalidResponse: 'Server returned unexpected response format',
+    invalidJson: 'Server returned invalid JSON response',
+    noImageData: 'No image data found',
+    processingFailed: 'Image processing failed, please try again later',
+    taskNotFound: 'Task not found or expired'
+  },
+  ja: {
+    noFile: '画像をアップロードしてください',
+    noStyleOrPrompt: 'スタイルを選択するか、カスタムプロンプトを入力してください',
+    serverConfigError: 'サーバー設定エラー、管理者に連絡してください',
+    serverError: 'サーバーエラー',
+    requestFailed: 'リクエスト失敗',
+    invalidResponse: 'サーバーが予期しないレスポンス形式を返しました',
+    invalidJson: 'サーバーが無効なJSONレスポンスを返しました',
+    noImageData: '画像データが見つかりません',
+    processingFailed: '画像処理に失敗しました。後でもう一度お試しください',
+    taskNotFound: 'タスクが見つからないか、期限切れです'
+  }
+};
+
+// 获取错误消息
+const getErrorMessage = (key, lang = 'en') => {
+  return errorMessages[lang]?.[key] || errorMessages.en[key];
+};
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 24 * 60 * 60 * 1000, // 24 hours
@@ -55,6 +100,7 @@ router.use('/process-image', limiter);
 // Image processing endpoint
 router.post('/process-image', upload.single('image'), async (req, res) => {
   const taskId = createTask();
+  const lang = req.headers['accept-language'] || 'en';
   try {
     console.log('Received request:', {
       file: req.file ? {
@@ -68,7 +114,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
 
     if (!req.file) {
       console.error('No file uploaded');
-      return res.status(400).json({ error: '请上传图片' });
+      return res.status(400).json({ error: getErrorMessage('noFile', lang) });
     }
 
     const { style, customPrompt } = req.body;
@@ -76,7 +122,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
 
     if (!style && !customPrompt) {
       console.error('No style or prompt provided');
-      return res.status(400).json({ error: '请选择风格或输入自定义提示词' });
+      return res.status(400).json({ error: getErrorMessage('noStyleOrPrompt', lang) });
     }
 
     // 过滤和清理提示词
@@ -103,10 +149,10 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
       console.error('Missing API configuration');
       updateTask(taskId, {
         status: TaskStatus.FAILED,
-        error: '服务器配置错误，请联系管理员'
+        error: getErrorMessage('serverConfigError', lang)
       });
       return res.status(500).json({ 
-        error: '服务器配置错误，请联系管理员',
+        error: getErrorMessage('serverConfigError', lang),
         taskId: taskId
       });
     }
@@ -209,7 +255,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('text/html')) {
               console.error('Received HTML response instead of JSON:', await response.text());
-              throw new Error('服务器返回了非预期的响应格式');
+              throw new Error(getErrorMessage('invalidResponse', lang));
             }
             
             if (response.ok) break;
@@ -220,16 +266,16 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
               if (retryCount === maxRetries) {
                 updateTask(taskId, {
                   status: TaskStatus.FAILED,
-                  error: `服务器错误: ${response.status}`
+                  error: `${getErrorMessage('serverError', lang)}: ${response.status}`
                 });
-                throw new Error(`服务器错误: ${response.status}`);
+                throw new Error(`${getErrorMessage('serverError', lang)}: ${response.status}`);
               }
               await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
               continue;
             }
             
             // 如果是客户端错误，直接抛出
-            const errorMessage = `请求失败: ${response.status}`;
+            const errorMessage = `${getErrorMessage('requestFailed', lang)}: ${response.status}`;
             updateTask(taskId, {
               status: TaskStatus.FAILED,
               error: errorMessage
@@ -241,7 +287,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
             if (retryCount === maxRetries) {
               updateTask(taskId, {
                 status: TaskStatus.FAILED,
-                error: error.message || '请求失败，请稍后重试'
+                error: error.message || getErrorMessage('processingFailed', lang)
               });
               throw error;
             }
@@ -254,7 +300,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error('API Error Response:', errorText);
-          throw new Error(`API request failed with status ${response.status}`);
+          throw new Error(`${getErrorMessage('requestFailed', lang)}: ${response.status}`);
         }
 
         let result;
@@ -262,7 +308,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
           result = await response.json();
         } catch (error) {
           console.error('Failed to parse API response as JSON:', error);
-          throw new Error('服务器返回了无效的JSON响应');
+          throw new Error(getErrorMessage('invalidJson', lang));
         }
         
         // Process the API response and extract the generated image from choices
@@ -302,7 +348,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         
         if (!processedImage) {
           console.error('API Response Missing Image Data:', result);
-          throw new Error('No image data in API response');
+          throw new Error(getErrorMessage('noImageData', lang));
         }
 
         // Update task status with the processed image
@@ -319,7 +365,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         });
         updateTask(taskId, {
           status: TaskStatus.FAILED,
-          error: error.message || '图片处理失败，请稍后重试'
+          error: error.message || getErrorMessage('processingFailed', lang)
         });
       }
     })();
@@ -328,18 +374,19 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
 
   } catch (error) {
     console.error('Error processing image:', error);
-    res.status(500).json({ error: '图片处理失败，请稍后重试' });
+    res.status(500).json({ error: getErrorMessage('processingFailed', lang) });
   }
 });
 
 // 状态检查API端点
 router.get('/process-status/:taskId', (req, res) => {
+  const lang = req.headers['accept-language'] || 'en';
   try {
     const { taskId } = req.params;
     const task = getTask(taskId);
     res.json(task);
   } catch (error) {
-    res.status(404).json({ error: '任务不存在或已过期' });
+    res.status(404).json({ error: getErrorMessage('taskNotFound', lang) });
   }
 });
 
