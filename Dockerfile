@@ -12,7 +12,7 @@ RUN npm install @stripe/stripe-js
 RUN npm install @heroicons/react react-hot-toast
 
 # 安装 TypeScript 类型定义包
-RUN npm install --save-dev @types/react @types/react-dom @types/react-dropzone @types/node @types/react-router-dom @types/react-icons @types/react-hot-toast
+RUN npm install --save-dev @types/react @types/react-dom @types/react-dropzone @types/node @types/react-router-dom @types/react-icons
 
 # 复制源代码
 COPY . .
