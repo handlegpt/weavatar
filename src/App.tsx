@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
-import { FaGithub } from 'react-icons/fa';
 import toast, { Toaster } from 'react-hot-toast';
 import VipPlans from './components/VipPlans';
 import Login from './components/Login';
@@ -38,7 +37,6 @@ const Home: React.FC = () => {
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
-  const [taskId, setTaskId] = useState<string | null>(null);
   const [waitingForStyle, setWaitingForStyle] = useState(false);
 
   const processImage = async (formData: FormData) => {
@@ -162,11 +160,9 @@ const Home: React.FC = () => {
             
             const data = await response.json();
             if (data.status === 'waiting_for_style') {
-              setTaskId(data.taskId);
               setWaitingForStyle(true);
               toast.success(t.success.selectStyleOrPrompt);
             } else {
-              setTaskId(data.taskId);
               toast.success(t.success.uploadSuccess);
             }
           } catch (error) {
