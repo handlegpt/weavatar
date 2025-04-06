@@ -145,11 +145,16 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
     console.log('API Configuration:', {
       hasApiKey: !!apiKey,
       apiEndpoint,
-      apiModel
+      apiModel,
+      apiKeyLength: apiKey ? apiKey.length : 0
     });
 
     if (!apiKey || !apiEndpoint || !apiModel) {
-      console.error('Missing API configuration');
+      console.error('Missing API configuration:', {
+        hasApiKey: !!apiKey,
+        apiEndpoint,
+        apiModel
+      });
       updateTask(taskId, {
         status: TaskStatus.FAILED,
         error: getErrorMessage('serverConfigError', lang)
