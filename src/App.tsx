@@ -62,7 +62,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">AI 智能图像处理</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">用GPT-4o来PS</h1>
         
         <div className="bg-white shadow sm:rounded-lg p-6">
           <div
