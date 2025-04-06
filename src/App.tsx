@@ -48,7 +48,7 @@ const Home: React.FC = () => {
       formData.append('image', file);
 
       try {
-        const response = await fetch('http://localhost:3000/api/process', {
+        const response = await fetch('http://localhost:3000/api/process-image', {
           method: 'POST',
           body: formData,
         });
