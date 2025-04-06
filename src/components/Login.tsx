@@ -15,14 +15,24 @@ const Login: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!isLogin && password !== confirmPassword) {
       alert('密码不匹配');
       return;
     }
+
     // 这里应该调用后端 API 进行登录/注册
-    console.log(isLogin ? '登录' : '注册', { email, password });
-    // 登录/注册成功后跳转到首页
-    history.push('/');
+    // 模拟登录/注册成功
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userEmail', email);
+    
+    // 如果是注册，跳转到会员页面
+    if (!isLogin) {
+      history.push('/vip');
+    } else {
+      // 如果是登录，返回上一页
+      history.goBack();
+    }
   };
 
   return (
@@ -111,14 +121,16 @@ const Login: React.FC = () => {
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
                   {isLogin ? t.noAccount : t.hasAccount}
-                  <button
-                    type="button"
-                    onClick={() => setIsLogin(!isLogin)}
-                    className="font-medium text-primary-600 hover:text-primary-500"
-                  >
-                    {isLogin ? t.register : t.login}
-                  </button>
                 </span>
+              </div>
+              <div className="mt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
+                  {isLogin ? t.register : t.login}
+                </button>
               </div>
             </div>
           </div>
