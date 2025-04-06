@@ -56,25 +56,53 @@ router.use('/process-image', limiter);
 router.post('/process-image', upload.single('image'), async (req, res) => {
   const taskId = createTask();
   try {
+    console.log('Received request:', {
+      file: req.file ? {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      } : null,
+      body: req.body
+    });
+
     if (!req.file) {
+      console.error('No file uploaded');
       return res.status(400).json({ error: '请上传图片' });
     }
 
     const { style, customPrompt } = req.body;
+    console.log('Request parameters:', { style, customPrompt });
+
     if (!style && !customPrompt) {
+      console.error('No style or prompt provided');
       return res.status(400).json({ error: '请选择风格或输入自定义提示词' });
     }
 
     // 过滤和清理提示词
     const sanitizedPrompt = sanitizePrompt(customPrompt);
     const finalPrompt = style || sanitizedPrompt;
+    console.log('Final prompt:', finalPrompt);
 
     // Convert image to base64
     const imageBase64 = req.file.buffer.toString('base64');
+    console.log('Image converted to base64, length:', imageBase64.length);
 
     // Get API configuration from environment variables
     const apiKey = process.env.API_KEY;
     const apiEndpoint = process.env.API_ENDPOINT;
+    const apiModel = process.env.API_MODEL;
+
+    console.log('API Configuration:', {
+      hasApiKey: !!apiKey,
+      apiEndpoint,
+      apiModel
+    });
+
+    if (!apiKey || !apiEndpoint || !apiModel) {
+      console.error('Missing API configuration');
+      throw new Error('API configuration is missing');
+    }
 
     // Prepare request payload
     const payload = {
