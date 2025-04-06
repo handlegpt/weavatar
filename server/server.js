@@ -101,7 +101,14 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
 
     if (!apiKey || !apiEndpoint || !apiModel) {
       console.error('Missing API configuration');
-      throw new Error('API configuration is missing');
+      updateTask(taskId, {
+        status: TaskStatus.FAILED,
+        error: '服务器配置错误，请联系管理员'
+      });
+      return res.status(500).json({ 
+        error: '服务器配置错误，请联系管理员',
+        taskId: taskId
+      });
     }
 
     // Prepare request payload
@@ -202,17 +209,34 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
             // 如果是服务器错误，等待后重试
             if (response.status >= 500) {
               retryCount++;
-              if (retryCount === maxRetries) throw new Error(`服务器错误: ${response.status}`);
+              if (retryCount === maxRetries) {
+                updateTask(taskId, {
+                  status: TaskStatus.FAILED,
+                  error: `服务器错误: ${response.status}`
+                });
+                throw new Error(`服务器错误: ${response.status}`);
+              }
               await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
               continue;
             }
             
             // 如果是客户端错误，直接抛出
-            throw new Error(`请求失败: ${response.status}`);
+            const errorMessage = `请求失败: ${response.status}`;
+            updateTask(taskId, {
+              status: TaskStatus.FAILED,
+              error: errorMessage
+            });
+            throw new Error(errorMessage);
           } catch (error) {
             console.error(`第${retryCount + 1}次请求失败:`, error);
             retryCount++;
-            if (retryCount === maxRetries) throw error;
+            if (retryCount === maxRetries) {
+              updateTask(taskId, {
+                status: TaskStatus.FAILED,
+                error: error.message || '请求失败，请稍后重试'
+              });
+              throw error;
+            }
             await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
           }
         }
