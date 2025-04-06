@@ -102,10 +102,11 @@ const Home: React.FC = () => {
                 clearInterval(pollInterval);
                 throw new Error(statusData.error || t.errors.processFailed);
               }
-            } catch (error) {
+            } catch (error: unknown) {
               clearInterval(pollInterval);
               console.error('Error polling task status:', error);
-              toast.error(error.message || t.errors.processFailed);
+              const errorMessage = error instanceof Error ? error.message : t.errors.processFailed;
+              toast.error(errorMessage);
             }
           }, 5000); // 每5秒轮询一次
 
@@ -117,9 +118,10 @@ const Home: React.FC = () => {
         } else {
           throw new Error(t.errors.processFailed);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Error:', error);
-        toast.error(error.message || t.errors.processFailed);
+        const errorMessage = error instanceof Error ? error.message : t.errors.processFailed;
+        toast.error(errorMessage);
       }
     }
   });
