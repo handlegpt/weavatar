@@ -257,7 +257,12 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
             // 检查响应内容类型
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('text/html')) {
-              console.error('Received HTML response instead of JSON:', await response.text());
+              const htmlContent = await response.text();
+              console.error('Received HTML response instead of JSON:', htmlContent);
+              updateTask(taskId, {
+                status: TaskStatus.FAILED,
+                error: getErrorMessage('invalidResponse', lang)
+              });
               throw new Error(getErrorMessage('invalidResponse', lang));
             }
             
@@ -303,6 +308,10 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         if (!response.ok) {
           const errorText = await response.text();
           console.error('API Error Response:', errorText);
+          updateTask(taskId, {
+            status: TaskStatus.FAILED,
+            error: `${getErrorMessage('requestFailed', lang)}: ${response.status}`
+          });
           throw new Error(`${getErrorMessage('requestFailed', lang)}: ${response.status}`);
         }
 
@@ -311,6 +320,10 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
           result = await response.json();
         } catch (error) {
           console.error('Failed to parse API response as JSON:', error);
+          updateTask(taskId, {
+            status: TaskStatus.FAILED,
+            error: getErrorMessage('invalidJson', lang)
+          });
           throw new Error(getErrorMessage('invalidJson', lang));
         }
         
