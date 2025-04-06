@@ -133,6 +133,7 @@ const Home: React.FC = () => {
         setSelectedImage(file);
         setPreviewUrl(URL.createObjectURL(file));
         setResultImage(null);
+        setWaitingForStyle(true); // 立即显示风格选择界面
         
         // 创建FormData对象
         const formData = new FormData();
@@ -144,8 +145,7 @@ const Home: React.FC = () => {
           if (customPrompt) formData.append('customPrompt', customPrompt);
           await processImage(formData);
         } else {
-          // 否则，显示风格选择界面
-          setWaitingForStyle(true);
+          // 显示提示消息
           toast.success(t.success.selectStyleOrPrompt);
         }
       }
