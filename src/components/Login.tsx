@@ -6,7 +6,7 @@ import LanguageSelector from './LanguageSelector';
 const Login: React.FC = () => {
   const history = useHistory();
   const [currentLanguage, setCurrentLanguage] = useState('zh');
-  const t = translations[currentLanguage as keyof typeof translations];
+  const t = translations[currentLanguage as keyof typeof translations].login;
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +32,7 @@ const Login: React.FC = () => {
       />
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {isLogin ? t.login : t.register}
+          {isLogin ? t.title : t.register}
         </h2>
       </div>
 
@@ -41,7 +41,7 @@ const Login: React.FC = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                邮箱
+                {t.email}
               </label>
               <div className="mt-1">
                 <input
@@ -59,7 +59,7 @@ const Login: React.FC = () => {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                密码
+                {t.password}
               </label>
               <div className="mt-1">
                 <input
@@ -78,7 +78,7 @@ const Login: React.FC = () => {
             {!isLogin && (
               <div>
                 <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700">
-                  确认密码
+                  {t.confirmPassword}
                 </label>
                 <div className="mt-1">
                   <input
@@ -100,7 +100,7 @@ const Login: React.FC = () => {
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               >
-                {isLogin ? t.login : t.register}
+                {isLogin ? t.submit : t.register}
               </button>
             </div>
           </form>
@@ -109,7 +109,7 @@ const Login: React.FC = () => {
             <div className="relative">
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">
-                  {isLogin ? '还没有账号？' : '已有账号？'}
+                  {isLogin ? t.noAccount : t.hasAccount}
                   <button
                     type="button"
                     onClick={() => setIsLogin(!isLogin)}

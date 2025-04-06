@@ -40,6 +40,17 @@ export const translations = {
       loginFirst: '请先登录',
       login: '登录',
       register: '注册'
+    },
+    login: {
+      title: '登录',
+      email: '邮箱',
+      password: '密码',
+      confirmPassword: '确认密码',
+      submit: '登录',
+      noAccount: '还没有账号？',
+      hasAccount: '已有账号？',
+      register: '注册',
+      login: '登录'
     }
   },
   en: {
@@ -83,6 +94,17 @@ export const translations = {
       loginFirst: 'Please login first',
       login: 'Login',
       register: 'Register'
+    },
+    login: {
+      title: 'Login',
+      email: 'Email',
+      password: 'Password',
+      confirmPassword: 'Confirm Password',
+      submit: 'Login',
+      noAccount: 'No account?',
+      hasAccount: 'Already have an account?',
+      register: 'Register',
+      login: 'Login'
     }
   },
   ja: {
@@ -126,6 +148,17 @@ export const translations = {
       loginFirst: 'ログインしてください',
       login: 'ログイン',
       register: '新規登録'
+    },
+    login: {
+      title: 'ログイン',
+      email: 'メールアドレス',
+      password: 'パスワード',
+      confirmPassword: 'パスワード（確認）',
+      submit: 'ログイン',
+      noAccount: 'アカウントをお持ちでない方',
+      hasAccount: 'すでにアカウントをお持ちの方',
+      register: '新規登録',
+      login: 'ログイン'
     }
   }
 }; 
