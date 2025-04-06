@@ -14,9 +14,33 @@ const __dirname = dirname(__filename);
 
 // 创建路由器而不是应用
 const router = express.Router();
+
+// 文件类型验证
+const fileFilter = (req, file, cb) => {
+  // 只允许图片文件
+  if (!file.mimetype.startsWith('image/')) {
+    return cb(new Error('只允许上传图片文件'), false);
+  }
+  cb(null, true);
+};
+
+// 配置 multer
 const upload = multer({ 
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: fileFilter
 });
+
+// 内容过滤函数
+const sanitizePrompt = (prompt) => {
+  if (!prompt) return '';
+  // 移除 HTML 标签
+  let sanitized = prompt.replace(/<[^>]*>/g, '');
+  // 移除特殊字符
+  sanitized = sanitized.replace(/[<>{}]/g, '');
+  // 限制长度
+  sanitized = sanitized.slice(0, 200);
+  return sanitized;
+};
 
 // Rate limiting
 const limiter = rateLimit({
@@ -41,6 +65,10 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: '请选择风格或输入自定义提示词' });
     }
 
+    // 过滤和清理提示词
+    const sanitizedPrompt = sanitizePrompt(customPrompt);
+    const finalPrompt = style || sanitizedPrompt;
+
     // Convert image to base64
     const imageBase64 = req.file.buffer.toString('base64');
 
@@ -57,7 +85,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
           content: [
             {
               type: 'text',
-              text: style || customPrompt || 'Transform this image'
+              text: finalPrompt || 'Transform this image'
             },
             {
               type: 'image_url',
@@ -128,6 +156,17 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
           try {
             response = await fetchWithRetry();
             if (response.ok) break;
+            
+            // 如果是服务器错误，等待后重试
+            if (response.status >= 500) {
+              retryCount++;
+              if (retryCount === maxRetries) throw new Error(`服务器错误: ${response.status}`);
+              await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
+              continue;
+            }
+            
+            // 如果是客户端错误，直接抛出
+            throw new Error(`请求失败: ${response.status}`);
           } catch (error) {
             console.error(`第${retryCount + 1}次请求失败:`, error);
             retryCount++;
@@ -199,7 +238,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         });
         updateTask(taskId, {
           status: TaskStatus.FAILED,
-          error: '图片处理失败，请稍后重试'
+          error: error.message || '图片处理失败，请稍后重试'
         });
       }
     })();

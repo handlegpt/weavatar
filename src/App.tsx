@@ -1,14 +1,29 @@
-import { useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import React, { useState } from 'react';
+import { useDropzone, FileRejection } from 'react-dropzone';
 import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { GitHubIcon } from '@heroicons/react/24/outline';
+import VipPlans from './components/VipPlans';
 
 interface StyleOption {
   id: string;
   name: string;
   prompt: string;
   description: string;
+}
+
+interface TaskResponse {
+  success: boolean;
+  message: string;
+  status: string;
+  taskId: string;
+}
+
+interface TaskStatus {
+  status: 'processing' | 'completed' | 'failed';
+  resultImage?: string;
+  error?: string;
 }
 
 const predefinedStyles: StyleOption[] = [
@@ -41,6 +56,7 @@ function App() {
   const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [showVipPlans, setShowVipPlans] = useState(false);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -150,21 +166,21 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">用GPT-4o来PS</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">AI 智能图像处理</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* 左侧：图片上传区域 */}
           <div className="space-y-6">
             <div {...getRootProps()} className="card cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary-500 transition-colors duration-200">
               <input {...getInputProps()} />
-              <div className="text-center">
+              <div className="text-center p-6">
                 <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
                 <p className="mt-2 text-sm text-gray-600">
-                  {isDragActive ? '将图片拖放到这里' : '点击或拖放图片到这里上传'}
+                  {isDragActive ? '松开鼠标上传图片' : '点击或拖放图片到这里上传'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">支持 JPG/PNG 格式，最大5MB</p>
+                <p className="text-xs text-gray-500 mt-1">支持 JPG/PNG 格式，建议尺寸 1024x1024，最大5MB</p>
               </div>
             </div>
 
@@ -203,9 +219,13 @@ function App() {
                     setSelectedStyle(null);
                   }
                 }}
-                placeholder="输入自定义提示词来描述你想要的效果..."
+                placeholder="输入自定义提示词来描述你想要的效果，例如：'将照片转换为水彩画风格'..."
                 className="input-field h-24"
+                maxLength={200}
               />
+              <p className="text-xs text-gray-500 mt-1 text-right">
+                {customPrompt.length}/200
+              </p>
             </div>
 
             <button
@@ -234,7 +254,9 @@ function App() {
 
             {processingStatus && (
               <div className="text-center text-sm text-primary-600 mt-4">
-                <p>{processingStatus}</p>
+                <div className="animate-pulse">
+                  <p>{processingStatus}</p>
+                </div>
               </div>
             )}
 
@@ -257,20 +279,32 @@ function App() {
               </div>
             )}
 
-            <div className="text-center text-sm text-gray-500 mt-4">
-              <p>免费用户每天可处理5张图片</p>
-              <p>升级会员获得更多配额</p>
+            <div className="mt-4 text-sm text-gray-500">
+              今日剩余处理次数：5次
+              <button
+                onClick={() => setShowVipPlans(true)}
+                className="ml-2 text-primary-600 hover:text-primary-500"
+              >
+                升级会员
+              </button>
             </div>
           </div>
         </div>
       </div>
       {/* GitHub链接 */}
       <div className="fixed bottom-0 left-0 right-0 bg-gray-100 py-2 text-center text-sm text-gray-600">
-        <a href="https://github.com/hooxing/4oPS" target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 transition-colors duration-200 inline-flex items-center gap-2">
-          <FaGithub className="h-5 w-5" />
-          hooxing/4oPS
+        <a href="https://github.com/handlegpt/weavatar" target="_blank" rel="noopener noreferrer" className="hover:text-primary-600 transition-colors duration-200 inline-flex items-center gap-2">
+          <GitHubIcon className="h-5 w-5" />
+          weavatar
         </a>
       </div>
+      {showVipPlans ? (
+        <VipPlans />
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* ... existing code ... */}
+        </div>
+      )}
     </div>
   );
 }
