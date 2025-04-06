@@ -4,12 +4,6 @@ import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
-interface StyleOption {
-  id: string;
-  name: string;
-  prompt: string;
-}
-
 function App() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -17,7 +11,6 @@ function App() {
   const [customPrompt, setCustomPrompt] = useState<string>('');
   const [processingStatus, setProcessingStatus] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const [showVipPlans, setShowVipPlans] = useState(false);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -57,7 +50,6 @@ function App() {
         throw new Error('处理失败');
       }
 
-      const data = await response.json();
       setProcessingStatus('处理完成');
       toast.success('处理成功');
     } catch (error) {
@@ -147,12 +139,12 @@ function App() {
 
           <div className="mt-4 text-sm text-gray-500">
             今日剩余处理次数：5次
-            <button
-              onClick={() => setShowVipPlans(true)}
+            <a
+              href="#"
               className="ml-2 text-primary-600 hover:text-primary-500"
             >
               升级会员
-            </button>
+            </a>
           </div>
         </div>
 
