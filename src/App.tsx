@@ -1,196 +1,172 @@
-import { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
-import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
-import toast from 'react-hot-toast';
-import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
+import toast, { Toaster } from 'react-hot-toast';
 import VipPlans from './components/VipPlans';
-import LanguageSelector from './components/LanguageSelector';
 import Login from './components/Login';
 import { translations } from './i18n/translations';
+import { LanguageProvider } from './contexts/LanguageContext';
 
-function Home() {
-  const history = useHistory();
-  const [currentLanguage, setCurrentLanguage] = useState('zh');
+const App: React.FC = () => {
+  console.log('App component rendered');
+  return (
+    <LanguageProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Toaster position="top-center" />
+          <Switch>
+            <Route exact path="/" component={Home} />
+            <Route path="/vip" component={VipPlans} />
+            <Route path="/login" component={Login} />
+          </Switch>
+        </div>
+      </Router>
+    </LanguageProvider>
+  );
+};
+
+const Home: React.FC = () => {
+  const { currentLanguage, setCurrentLanguage } = useLanguage();
   const t = translations[currentLanguage as keyof typeof translations];
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
-  const [selectedStyle, setSelectedStyle] = useState<string>('');
-  const [customPrompt, setCustomPrompt] = useState<string>('');
-  const [processingStatus, setProcessingStatus] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif']
     },
     maxSize: 5 * 1024 * 1024, // 5MB
-    onDrop: (acceptedFiles: File[]) => {
-      if (acceptedFiles.length > 0) {
-        const file = acceptedFiles[0];
-        setSelectedFile(file);
-        setPreviewUrl(URL.createObjectURL(file));
+    onDrop: async (acceptedFiles) => {
+      if (acceptedFiles.length === 0) {
+        toast.error('请上传有效的图片文件（JPG、PNG、GIF），大小不超过 5MB');
+        return;
+      }
+
+      const file = acceptedFiles[0];
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch('http://localhost:3000/api/process', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('处理失败');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `processed-${file.name}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast.success('处理成功！');
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error('处理失败，请重试');
       }
     }
   });
 
-  const handleProcess = async () => {
-    if (!selectedFile) {
-      toast.error(t.process.error);
-      return;
-    }
-
-    try {
-      setProcessingStatus(t.process.processing);
-      setError(null);
-
-      const formData = new FormData();
-      formData.append('image', selectedFile);
-      formData.append('style', selectedStyle);
-      formData.append('prompt', customPrompt);
-
-      const response = await fetch('/api/process-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(t.process.error);
-      }
-
-      setProcessingStatus(t.process.success);
-      toast.success(t.process.success);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : t.process.error);
-      setProcessingStatus('');
-      toast.error(t.process.error);
-    }
-  };
-
-  const handleUpgradeClick = () => {
-    history.push('/vip');
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <LanguageSelector
-        currentLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
-      />
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">{t.title}</h1>
-        
-        <div className="bg-white shadow sm:rounded-lg p-6">
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${
-              isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-            }`}
-          >
-            <input {...getInputProps()} />
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="max-h-64 mx-auto mb-4"
-              />
-            ) : (
-              <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-            )}
-            <p className="text-sm text-gray-600">
-              {isDragActive
-                ? t.dropzone.dragActive
-                : t.dropzone.dragInactive}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {t.dropzone.formatHint}
-            </p>
-          </div>
-
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700">
-              {t.style.label}
-            </label>
-            <select
-              value={selectedStyle}
-              onChange={(e) => setSelectedStyle(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            >
-              <option value="">{t.style.placeholder}</option>
-              <option value="anime">{t.style.options.anime}</option>
-              <option value="oil">{t.style.options.oil}</option>
-              <option value="watercolor">{t.style.options.watercolor}</option>
-            </select>
-          </div>
-
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700">
-              {t.prompt.label}
-            </label>
-            <textarea
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              rows={3}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              placeholder={t.prompt.placeholder}
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">{t.title}</h1>
+          <div className="flex items-center space-x-4">
+            <LanguageSelector
+              currentLanguage={currentLanguage}
+              onLanguageChange={setCurrentLanguage}
             />
-          </div>
-
-          <div className="mt-6">
-            <button
-              onClick={handleProcess}
-              disabled={!selectedFile || processingStatus === t.process.processing}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+            <a
+              href="https://github.com/handlegpt/weavatar"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-gray-700"
             >
-              {processingStatus || t.process.button}
-            </button>
+              <FaGithub className="h-6 w-6" />
+            </a>
           </div>
+        </div>
+      </header>
 
-          {error && (
-            <div className="mt-4 flex items-center text-red-600">
-              <ExclamationCircleIcon className="h-5 w-5 mr-2" />
-              <span className="text-sm">{error}</span>
+      <main>
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            <div
+              {...getRootProps()}
+              className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg ${
+                isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
+              }`}
+            >
+              <div className="space-y-1 text-center">
+                <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="flex text-sm text-gray-600">
+                  <input {...getInputProps()} />
+                  <p className="pl-1">{isDragActive ? t.dropzone.dragActive : t.dropzone.dragInactive}</p>
+                </div>
+                <p className="text-xs text-gray-500">{t.dropzone.formatHint}</p>
+              </div>
             </div>
-          )}
 
-          <div className="mt-4 text-sm text-gray-500">
-            {t.remaining}
-            <button
-              onClick={handleUpgradeClick}
-              className="ml-2 text-primary-600 hover:text-primary-500"
-            >
-              {t.upgrade}
-            </button>
+            <div className="mt-6">
+              <label htmlFor="style" className="block text-sm font-medium text-gray-700">
+                {t.style.label}
+              </label>
+              <select
+                id="style"
+                name="style"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+              >
+                <option value="">{t.style.placeholder}</option>
+                <option value="anime">{t.style.options.anime}</option>
+                <option value="oil">{t.style.options.oil}</option>
+                <option value="watercolor">{t.style.options.watercolor}</option>
+              </select>
+            </div>
+
+            <div className="mt-6">
+              <label htmlFor="prompt" className="block text-sm font-medium text-gray-700">
+                {t.prompt.label}
+              </label>
+              <input
+                type="text"
+                name="prompt"
+                id="prompt"
+                className="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                placeholder={t.prompt.placeholder}
+              />
+            </div>
+
+            <div className="mt-6">
+              <button
+                type="button"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                {t.process.button}
+              </button>
+            </div>
+
+            <div className="mt-6 text-sm text-gray-500">
+              {t.remaining}
+              <button
+                onClick={() => window.location.href = '/vip'}
+                className="ml-2 text-primary-600 hover:text-primary-500"
+              >
+                {t.upgrade}
+              </button>
+            </div>
           </div>
         </div>
-
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <a
-            href="https://github.com/handlegpt/weavatar"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center text-gray-500 hover:text-gray-700"
-          >
-            <FaGithub className="h-5 w-5 mr-2" />
-            {t.github}
-          </a>
-        </div>
-      </div>
+      </main>
     </div>
   );
-}
-
-function App() {
-  console.log('App component rendered');
-  return (
-    <Router>
-      <Switch>
-        <Route exact path="/" component={Home} />
-        <Route path="/vip" component={VipPlans} />
-        <Route path="/login" component={Login} />
-      </Switch>
-    </Router>
-  );
-}
+};
 
 export default App;

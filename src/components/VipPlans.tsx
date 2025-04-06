@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { translations } from '../i18n/translations';
 import LanguageSelector from './LanguageSelector';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const VipPlans: React.FC = () => {
   const history = useHistory();
-  const [currentLanguage, setCurrentLanguage] = useState('zh');
+  const { currentLanguage, setCurrentLanguage } = useLanguage();
   const t = translations[currentLanguage as keyof typeof translations].vip;
   const [isLoggedIn] = useState(false);
 
