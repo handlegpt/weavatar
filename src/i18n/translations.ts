@@ -26,10 +26,12 @@ export const translations = {
     upgrade: '升级到会员',
     errors: {
       invalidFile: '请上传有效的图片文件（JPG、PNG、GIF），大小不超过 5MB',
-      processFailed: '处理失败，请重试'
+      processFailed: '处理失败，请重试',
+      processTimeout: '处理超时，请重试'
     },
     success: {
-      processComplete: '处理成功！'
+      processComplete: '处理成功！',
+      processing: '图片正在处理中，请稍候...'
     },
     vip: {
       title: '会员计划',
@@ -95,10 +97,12 @@ export const translations = {
     upgrade: 'Upgrade to VIP',
     errors: {
       invalidFile: 'Please upload a valid image file (JPG, PNG, GIF) under 5MB',
-      processFailed: 'Processing failed, please try again'
+      processFailed: 'Processing failed, please try again',
+      processTimeout: 'Processing timed out, please try again'
     },
     success: {
-      processComplete: 'Processing completed!'
+      processComplete: 'Processing completed!',
+      processing: 'Processing in progress, please wait...'
     },
     vip: {
       title: 'Membership Plans',
@@ -164,10 +168,12 @@ export const translations = {
     upgrade: 'VIPにアップグレード',
     errors: {
       invalidFile: '有効な画像ファイル（JPG、PNG、GIF）を5MB以下でアップロードしてください',
-      processFailed: '処理に失敗しました。もう一度お試しください'
+      processFailed: '処理に失敗しました。もう一度お試しください',
+      processTimeout: '処理がタイムアウトしました。もう一度お試しください'
     },
     success: {
-      processComplete: '処理が完了しました！'
+      processComplete: '処理が完了しました！',
+      processing: '処理中です。しばらくお待ちください...'
     },
     vip: {
       title: 'メンバーシッププラン',

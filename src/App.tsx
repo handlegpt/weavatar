@@ -67,23 +67,59 @@ const Home: React.FC = () => {
         });
 
         if (!response.ok) {
-          throw new Error(t.errors.processFailed);
+          const errorData = await response.json();
+          throw new Error(errorData.error || t.errors.processFailed);
         }
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `processed-${file.name}`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const data = await response.json();
+        console.log('Response data:', data);
 
-        toast.success(t.success.processComplete);
+        if (data.status === 'processing') {
+          toast.success(t.success.processing);
+          // 开始轮询任务状态
+          const taskId = data.taskId;
+          const pollInterval = setInterval(async () => {
+            try {
+              const statusResponse = await fetch(`/api/task-status/${taskId}`);
+              if (!statusResponse.ok) {
+                throw new Error(t.errors.processFailed);
+              }
+              const statusData = await statusResponse.json();
+              console.log('Task status:', statusData);
+
+              if (statusData.status === 'completed' && statusData.resultImage) {
+                clearInterval(pollInterval);
+                // 下载处理后的图片
+                const a = document.createElement('a');
+                a.href = statusData.resultImage;
+                a.download = `processed-${file.name}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(statusData.resultImage);
+                document.body.removeChild(a);
+                toast.success(t.success.processComplete);
+              } else if (statusData.status === 'failed') {
+                clearInterval(pollInterval);
+                throw new Error(statusData.error || t.errors.processFailed);
+              }
+            } catch (error) {
+              clearInterval(pollInterval);
+              console.error('Error polling task status:', error);
+              toast.error(error.message || t.errors.processFailed);
+            }
+          }, 5000); // 每5秒轮询一次
+
+          // 设置超时
+          setTimeout(() => {
+            clearInterval(pollInterval);
+            toast.error(t.errors.processTimeout);
+          }, 5 * 60 * 1000); // 5分钟超时
+        } else {
+          throw new Error(t.errors.processFailed);
+        }
       } catch (error) {
         console.error('Error:', error);
-        toast.error(t.errors.processFailed);
+        toast.error(error.message || t.errors.processFailed);
       }
     }
   });
