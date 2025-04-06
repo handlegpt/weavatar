@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDropzone, FileRejection } from 'react-dropzone';
+import { useDropzone } from 'react-dropzone';
 import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -14,16 +14,14 @@ interface StyleOption {
 }
 
 interface TaskResponse {
-  success: boolean;
-  message: string;
-  status: string;
   taskId: string;
+  status: string;
+  result?: string;
 }
 
 interface TaskStatus {
-  status: 'processing' | 'completed' | 'failed';
-  resultImage?: string;
-  error?: string;
+  status: string;
+  result?: string;
 }
 
 const predefinedStyles: StyleOption[] = [
@@ -60,17 +58,15 @@ function App() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png']
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif']
     },
-    maxSize: 5242880, // 5MB
-    onDrop: (acceptedFiles) => {
+    maxSize: 5 * 1024 * 1024, // 5MB
+    onDrop: (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
-        setSelectedFile(acceptedFiles[0]);
-        setPreviewUrl(URL.createObjectURL(acceptedFiles[0]));
+        const file = acceptedFiles[0];
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
       }
-    },
-    onDropRejected: () => {
-      toast.error('请上传5MB以内的图片文件（JPG/PNG格式）');
     }
   });
 

@@ -98,7 +98,7 @@ const VipPlans: React.FC = () => {
                 包含特权
               </h4>
               <ul className="mt-6 space-y-4">
-                {plan.features.map((feature) => (
+                {plan.features.map((feature: string) => (
                   <li key={feature} className="flex space-x-3">
                     <CheckIcon className="flex-shrink-0 h-5 w-5 text-green-500" />
                     <span className="text-sm text-gray-500">{feature}</span>

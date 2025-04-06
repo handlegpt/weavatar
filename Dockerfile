@@ -7,7 +7,7 @@ COPY . .
 # 安装依赖并构建前端
 RUN npm install
 # 安装 TypeScript 类型定义包
-RUN npm install --save-dev @types/react @types/react-dom @types/react-dropzone @types/node
+RUN npm install --save-dev @types/react @types/react-dom @types/react-dropzone @types/node @types/react-icons @types/react-hot-toast
 
 # 构建前端
 RUN npm run build
