@@ -27,7 +27,20 @@ export const translations = {
     },
     remaining: '今日剩余处理次数：5次',
     upgrade: '升级会员',
-    github: 'GitHub'
+    github: 'GitHub',
+    vip: {
+      title: '选择您的会员方案',
+      subtitle: '升级会员，享受更多特权',
+      features: '包含特权',
+      monthly: '月度会员',
+      quarterly: '季度会员',
+      yearly: '年度会员',
+      perMonth: '/月',
+      subscribe: '立即开通',
+      loginFirst: '请先登录',
+      login: '登录',
+      register: '注册'
+    }
   },
   en: {
     title: 'weavatar',
@@ -57,7 +70,20 @@ export const translations = {
     },
     remaining: 'Remaining processing times today: 5',
     upgrade: 'Upgrade Membership',
-    github: 'GitHub'
+    github: 'GitHub',
+    vip: {
+      title: 'Choose Your Membership Plan',
+      subtitle: 'Upgrade to enjoy more privileges',
+      features: 'Included Features',
+      monthly: 'Monthly Plan',
+      quarterly: 'Quarterly Plan',
+      yearly: 'Yearly Plan',
+      perMonth: '/month',
+      subscribe: 'Subscribe Now',
+      loginFirst: 'Please login first',
+      login: 'Login',
+      register: 'Register'
+    }
   },
   ja: {
     title: 'weavatar',
@@ -87,6 +113,19 @@ export const translations = {
     },
     remaining: '本日の残り処理回数：5回',
     upgrade: 'メンバーシップアップグレード',
-    github: 'GitHub'
+    github: 'GitHub',
+    vip: {
+      title: 'メンバーシッププランを選択',
+      subtitle: 'アップグレードして特典を楽しもう',
+      features: '含まれる特典',
+      monthly: '月額プラン',
+      quarterly: '3ヶ月プラン',
+      yearly: '年間プラン',
+      perMonth: '/月',
+      subscribe: '今すぐ申し込む',
+      loginFirst: 'ログインしてください',
+      login: 'ログイン',
+      register: '新規登録'
+    }
   }
 }; 
