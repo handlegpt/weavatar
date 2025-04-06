@@ -3,8 +3,10 @@ import { useDropzone } from 'react-dropzone';
 import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import VipPlans from './components/VipPlans';
 
-function App() {
+function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
@@ -139,12 +141,12 @@ function App() {
 
           <div className="mt-4 text-sm text-gray-500">
             今日剩余处理次数：5次
-            <a
-              href="/vip"
+            <Link
+              to="/vip"
               className="ml-2 text-primary-600 hover:text-primary-500"
             >
               升级会员
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -161,6 +163,18 @@ function App() {
         </div>
       </div>
     </div>
+  );
+}
+
+function App() {
+  console.log('App component rendered');
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/vip" element={<VipPlans />} />
+      </Routes>
+    </Router>
   );
 }
 
