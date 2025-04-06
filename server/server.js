@@ -106,7 +106,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
 
     // Prepare request payload
     const payload = {
-      model: process.env.API_MODEL,
+      model: apiModel,
       messages: [
         {
           role: 'user',
@@ -147,7 +147,21 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         // Log API request details
         console.log('API Request:', {
           endpoint: apiEndpoint,
-          payload: payload
+          headers: {
+            ...headers,
+            'Authorization': 'Bearer [REDACTED]'
+          },
+          payload: {
+            ...payload,
+            messages: payload.messages.map(msg => ({
+              ...msg,
+              content: msg.content.map(content => 
+                content.type === 'image_url' 
+                  ? { ...content, image_url: { url: '[REDACTED]' } }
+                  : content
+              )
+            }))
+          }
         });
 
         // 设置请求超时和重试配置
