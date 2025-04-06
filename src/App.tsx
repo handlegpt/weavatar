@@ -61,7 +61,7 @@ const Home: React.FC = () => {
       }
 
       try {
-        const response = await fetch('http://localhost:3000/api/process-image', {
+        const response = await fetch('/api/process-image', {
           method: 'POST',
           body: formData,
         });
