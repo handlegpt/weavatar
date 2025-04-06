@@ -14,7 +14,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       <select
         value={currentLanguage}
         onChange={(e) => onLanguageChange(e.target.value)}
-        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+        className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
       >
         <option value="zh">中文</option>
         <option value="en">English</option>

@@ -7,7 +7,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import VipPlans from './components/VipPlans';
 import Login from './components/Login';
 import { translations } from './i18n/translations';
-import { LanguageProvider } from './contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import LanguageSelector from './components/LanguageSelector';
 
 const App: React.FC = () => {
   console.log('App component rendered');
