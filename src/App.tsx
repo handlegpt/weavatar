@@ -29,7 +29,7 @@ const App: React.FC = () => {
 };
 
 const Home: React.FC = () => {
-  const { currentLanguage, setCurrentLanguage } = useLanguage();
+  const { currentLanguage } = useLanguage();
   const t = translations[currentLanguage as keyof typeof translations];
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -187,7 +187,7 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">WeAvatar</h1>
           <div className="flex items-center space-x-4">
-            <LanguageSelector />
+            <LanguageSelector currentLanguage={currentLanguage} onLanguageChange={() => {}} />
           </div>
         </div>
       </header>
