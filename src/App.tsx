@@ -41,6 +41,90 @@ const Home: React.FC = () => {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [waitingForStyle, setWaitingForStyle] = useState(false);
 
+  const processImage = async (formData: FormData) => {
+    try {
+      const response = await fetch('/api/process-image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || t.errors.processFailed);
+      }
+
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (data.status === 'processing') {
+        toast.success(t.success.processing);
+        // 开始轮询任务状态
+        const taskId = data.taskId;
+        const pollInterval = setInterval(async () => {
+          try {
+            const statusResponse = await fetch(`/api/task-status/${taskId}`);
+            if (!statusResponse.ok) {
+              throw new Error(t.errors.processFailed);
+            }
+            const statusData = await statusResponse.json();
+            console.log('Task status:', statusData);
+
+            if (statusData.status === 'completed' && statusData.resultImage) {
+              clearInterval(pollInterval);
+              setResultImage(statusData.resultImage);
+              toast.success(t.success.processComplete);
+            } else if (statusData.status === 'failed') {
+              clearInterval(pollInterval);
+              throw new Error(statusData.error || t.errors.processFailed);
+            }
+          } catch (error: unknown) {
+            clearInterval(pollInterval);
+            console.error('Error polling task status:', error);
+            const errorMessage = error instanceof Error ? error.message : t.errors.processFailed;
+            toast.error(errorMessage);
+          }
+        }, 5000); // 每5秒轮询一次
+
+        // 设置超时
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          toast.error(t.errors.processTimeout);
+        }, 5 * 60 * 1000); // 5分钟超时
+      } else {
+        throw new Error(t.errors.processFailed);
+      }
+    } catch (error: unknown) {
+      console.error('Error:', error);
+      const errorMessage = error instanceof Error ? error.message : t.errors.processFailed;
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleStyleSelect = async (style: string) => {
+    setSelectedStyle(style);
+    setCustomPrompt('');
+    
+    // 如果已经上传了图片，开始处理
+    if (selectedImage) {
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      formData.append('style', style);
+      await processImage(formData);
+    }
+  };
+  
+  const handleCustomPromptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // 如果已经上传了图片，开始处理
+    if (selectedImage) {
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+      formData.append('customPrompt', customPrompt);
+      await processImage(formData);
+    }
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif']
@@ -80,112 +164,21 @@ const Home: React.FC = () => {
             if (data.status === 'waiting_for_style') {
               setTaskId(data.taskId);
               setWaitingForStyle(true);
-              toast.success(t.messages.selectStyleOrPrompt);
+              toast.success(t.success.selectStyleOrPrompt);
             } else {
               setTaskId(data.taskId);
-              toast.success(t.messages.uploadSuccess);
+              toast.success(t.success.uploadSuccess);
             }
           } catch (error) {
             console.error('Error uploading image:', error);
-            toast.error(t.errors.uploadFailed);
+            toast.error(t.errors.processFailed);
           } finally {
             setIsProcessing(false);
           }
         }
       }
-    }, [selectedStyle, customPrompt, t]);
-
-  const handleStyleSelect = async (style: string) => {
-    setSelectedStyle(style);
-    setCustomPrompt('');
-    
-    // 如果已经上传了图片，开始处理
-    if (selectedImage) {
-      const formData = new FormData();
-      formData.append('image', selectedImage);
-      formData.append('style', style);
-      await processImage(formData);
-    }
-  };
-  
-  const handleCustomPromptSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // 如果已经上传了图片，开始处理
-    if (selectedImage) {
-      const formData = new FormData();
-      formData.append('image', selectedImage);
-      formData.append('customPrompt', customPrompt);
-      await processImage(formData);
-    }
-  };
-
-  const processImage = async (formData: FormData) => {
-    try {
-      const response = await fetch('/api/process-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || t.errors.processFailed);
-      }
-
-      const data = await response.json();
-      console.log('Response data:', data);
-
-      if (data.status === 'processing') {
-        toast.success(t.success.processing);
-        // 开始轮询任务状态
-        const taskId = data.taskId;
-        const pollInterval = setInterval(async () => {
-          try {
-            const statusResponse = await fetch(`/api/task-status/${taskId}`);
-            if (!statusResponse.ok) {
-              throw new Error(t.errors.processFailed);
-            }
-            const statusData = await statusResponse.json();
-            console.log('Task status:', statusData);
-
-            if (statusData.status === 'completed' && statusData.resultImage) {
-              clearInterval(pollInterval);
-              // 下载处理后的图片
-              const a = document.createElement('a');
-              a.href = statusData.resultImage;
-              a.download = `processed-${selectedImage?.name || ''}`;
-              document.body.appendChild(a);
-              a.click();
-              window.URL.revokeObjectURL(statusData.resultImage);
-              document.body.removeChild(a);
-              toast.success(t.success.processComplete);
-              setResultImage(statusData.resultImage);
-            } else if (statusData.status === 'failed') {
-              clearInterval(pollInterval);
-              throw new Error(statusData.error || t.errors.processFailed);
-            }
-          } catch (error: unknown) {
-            clearInterval(pollInterval);
-            console.error('Error polling task status:', error);
-            const errorMessage = error instanceof Error ? error.message : t.errors.processFailed;
-            toast.error(errorMessage);
-          }
-        }, 5000); // 每5秒轮询一次
-
-        // 设置超时
-        setTimeout(() => {
-          clearInterval(pollInterval);
-          toast.error(t.errors.processTimeout);
-        }, 5 * 60 * 1000); // 5分钟超时
-      } else {
-        throw new Error(t.errors.processFailed);
-      }
-    } catch (error: unknown) {
-      console.error('Error:', error);
-      const errorMessage = error instanceof Error ? error.message : t.errors.processFailed;
-      toast.error(errorMessage);
-    }
-  };
+    }, [selectedStyle, customPrompt, t, processImage])
+  });
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -195,24 +188,6 @@ const Home: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">WeAvatar</h1>
           <div className="flex items-center space-x-4">
             <LanguageSelector />
-            {isLoggedIn ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700">{userEmail}</span>
-                <button
-                  onClick={handleLogout}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                >
-                  {t.buttons.logout}
-                </button>
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                {t.buttons.login}
-              </Link>
-            )}
           </div>
         </div>
       </header>
@@ -229,12 +204,12 @@ const Home: React.FC = () => {
               >
                 <input {...getInputProps()} />
                 <div className="space-y-4">
-                  <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <ArrowUpTrayIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <div className="text-gray-600">
                     {isDragActive ? (
-                      <p>{t.messages.dropHere}</p>
+                      <p>{t.dropzone.dragActive}</p>
                     ) : (
-                      <p>{t.messages.dragAndDrop}</p>
+                      <p>{t.dropzone.dragInactive}</p>
                     )}
                   </div>
                 </div>
@@ -245,7 +220,7 @@ const Home: React.FC = () => {
               <div className="w-full max-w-3xl">
                 <div className="bg-white shadow rounded-lg overflow-hidden">
                   <div className="p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t.labels.preview}</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">预览</h3>
                     <div className="relative aspect-square">
                       <img
                         src={previewUrl}
@@ -262,29 +237,29 @@ const Home: React.FC = () => {
               <div className="w-full max-w-3xl">
                 <div className="bg-white shadow rounded-lg overflow-hidden">
                   <div className="p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t.labels.selectStyle}</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t.style.label}</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {styles.map((style) => (
+                      {Object.entries(t.style.options).map(([id, name]) => (
                         <button
-                          key={style.id}
-                          onClick={() => handleStyleSelect(style.id)}
+                          key={id}
+                          onClick={() => handleStyleSelect(id)}
                           className={`p-4 border rounded-lg text-center transition-colors ${
-                            selectedStyle === style.id
+                            selectedStyle === id
                               ? 'border-blue-500 bg-blue-50 text-blue-700'
                               : 'border-gray-300 hover:border-gray-400'
                           }`}
                         >
-                          <span className="block font-medium">{style.name[currentLanguage]}</span>
+                          <span className="block font-medium">{name}</span>
                         </button>
                       ))}
                     </div>
                     
                     <div className="mt-6">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">{t.labels.customPrompt}</h3>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">{t.prompt.label}</h3>
                       <form onSubmit={handleCustomPromptSubmit} className="space-y-4">
                         <div>
                           <label htmlFor="customPrompt" className="block text-sm font-medium text-gray-700">
-                            {t.labels.enterPrompt}
+                            {t.prompt.label}
                           </label>
                           <div className="mt-1">
                             <input
@@ -293,7 +268,7 @@ const Home: React.FC = () => {
                               value={customPrompt}
                               onChange={(e) => setCustomPrompt(e.target.value)}
                               className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                              placeholder={t.placeholders.enterPrompt}
+                              placeholder={t.prompt.placeholder}
                             />
                           </div>
                         </div>
@@ -302,7 +277,7 @@ const Home: React.FC = () => {
                           disabled={!customPrompt.trim()}
                           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
-                          {t.buttons.generate}
+                          {t.process.button}
                         </button>
                       </form>
                     </div>
@@ -317,7 +292,7 @@ const Home: React.FC = () => {
                   <div className="p-4">
                     <div className="flex items-center justify-center space-x-2">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                      <span className="text-gray-700">{t.messages.processing}</span>
+                      <span className="text-gray-700">{t.success.processing}</span>
                     </div>
                   </div>
                 </div>
@@ -328,7 +303,7 @@ const Home: React.FC = () => {
               <div className="w-full max-w-3xl">
                 <div className="bg-white shadow rounded-lg overflow-hidden">
                   <div className="p-4">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">{t.labels.result}</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">结果</h3>
                     <div className="relative aspect-square">
                       <img
                         src={resultImage}
@@ -348,7 +323,7 @@ const Home: React.FC = () => {
                         }}
                         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                       >
-                        {t.buttons.download}
+                        下载
                       </button>
                     </div>
                   </div>
