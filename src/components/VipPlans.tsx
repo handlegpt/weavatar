@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { translations } from '../i18n/translations';
 import { useLanguage } from '../contexts/LanguageContext';
+import { loadStripe } from '@stripe/stripe-js';
+
+// 初始化 Stripe
+const stripePromise = loadStripe(process.env.STRIPE_PUBLIC_KEY || 'pk_test_your_stripe_public_key');
 
 const VipPlans: React.FC = () => {
   const history = useHistory();
   const { currentLanguage } = useLanguage();
   const t = translations[currentLanguage as keyof typeof translations].vip;
+  const [loading, setLoading] = useState(false);
 
   const plans = [
     {
@@ -19,7 +24,8 @@ const VipPlans: React.FC = () => {
         t.features.styles,
         t.features.support
       ],
-      button: t.plans.monthly.button
+      button: t.plans.monthly.button,
+      priceId: 'price_monthly' // 替换为实际的 Stripe Price ID
     },
     {
       name: t.plans.yearly.name,
@@ -32,11 +38,12 @@ const VipPlans: React.FC = () => {
         t.features.support
       ],
       button: t.plans.yearly.button,
-      save: t.plans.yearly.save
+      save: t.plans.yearly.save,
+      priceId: 'price_yearly' // 替换为实际的 Stripe Price ID
     }
   ];
 
-  const handleSubscribe = (plan: string) => {
+  const handleSubscribe = async (plan: typeof plans[0]) => {
     // 检查用户是否已登录
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     if (!isLoggedIn) {
@@ -44,8 +51,44 @@ const VipPlans: React.FC = () => {
       history.push('/login');
       return;
     }
-    // TODO: 处理订阅逻辑
-    console.log(`Subscribing to ${plan} plan`);
+
+    try {
+      setLoading(true);
+      
+      // 创建支付会话
+      const response = await fetch('http://localhost:3000/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          priceId: plan.priceId,
+          userId: localStorage.getItem('userEmail'),
+          successUrl: `${window.location.origin}/vip/success`,
+          cancelUrl: `${window.location.origin}/vip`,
+        }),
+      });
+
+      const session = await response.json();
+
+      // 重定向到 Stripe Checkout
+      const stripe = await stripePromise;
+      if (stripe) {
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: session.id,
+        });
+
+        if (error) {
+          console.error('Stripe checkout error:', error);
+          alert('支付过程中出现错误，请重试');
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('创建支付会话失败，请重试');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -84,10 +127,13 @@ const VipPlans: React.FC = () => {
                   </p>
                 )}
                 <button
-                  onClick={() => handleSubscribe(plan.name)}
-                  className="mt-8 block w-full bg-primary-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-primary-700"
+                  onClick={() => handleSubscribe(plan)}
+                  disabled={loading}
+                  className={`mt-8 block w-full bg-primary-600 border border-transparent rounded-md py-2 text-sm font-semibold text-white text-center hover:bg-primary-700 ${
+                    loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  {plan.button}
+                  {loading ? '处理中...' : plan.button}
                 </button>
               </div>
               <div className="pt-6 pb-8 px-6">

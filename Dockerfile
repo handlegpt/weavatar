@@ -7,6 +7,7 @@ COPY package*.json ./
 # 安装依赖
 RUN npm install
 RUN npm install react-router-dom@5.3.4
+RUN npm install @stripe/stripe-js
 
 # 安装 TypeScript 类型定义包
 RUN npm install --save-dev @types/react @types/react-dom @types/react-dropzone @types/node @types/react-router-dom @types/react-icons
@@ -17,6 +18,7 @@ COPY . .
 # 设置环境变量
 ENV NODE_ENV=development
 ENV PORT=3000
+ENV STRIPE_PUBLIC_KEY=pk_test_your_stripe_public_key
 
 # 构建前端
 RUN npm run build
