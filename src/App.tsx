@@ -39,7 +39,7 @@ const Home: React.FC = () => {
     maxSize: 5 * 1024 * 1024, // 5MB
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length === 0) {
-        toast.error('请上传有效的图片文件（JPG、PNG、GIF），大小不超过 5MB');
+        toast.error(t.errors.invalidFile);
         return;
       }
 
@@ -54,7 +54,7 @@ const Home: React.FC = () => {
         });
 
         if (!response.ok) {
-          throw new Error('处理失败');
+          throw new Error(t.errors.processFailed);
         }
 
         const blob = await response.blob();
@@ -67,10 +67,10 @@ const Home: React.FC = () => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        toast.success('处理成功！');
+        toast.success(t.success.processComplete);
       } catch (error) {
         console.error('Error:', error);
-        toast.error('处理失败，请重试');
+        toast.error(t.errors.processFailed);
       }
     }
   });
