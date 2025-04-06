@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import { BrowserRouter as Router, Route, Switch, Link, useHistory } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
 import VipPlans from './components/VipPlans';
 
 function Home() {
