@@ -3,10 +3,11 @@ import { useDropzone } from 'react-dropzone';
 import { PhotoIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { FaGithub } from 'react-icons/fa';
 import toast from 'react-hot-toast';
-import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch, Link, useHistory } from 'react-router-dom';
 import VipPlans from './components/VipPlans';
 
 function Home() {
+  const history = useHistory();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [selectedStyle, setSelectedStyle] = useState<string>('');
@@ -61,10 +62,14 @@ function Home() {
     }
   };
 
+  const handleUpgradeClick = () => {
+    history.push('/vip');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">用GPT-4o来PS</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">weavatar</h1>
         
         <div className="bg-white shadow sm:rounded-lg p-6">
           <div
@@ -141,12 +146,12 @@ function Home() {
 
           <div className="mt-4 text-sm text-gray-500">
             今日剩余处理次数：5次
-            <Link
-              to="/vip"
+            <button
+              onClick={handleUpgradeClick}
               className="ml-2 text-primary-600 hover:text-primary-500"
             >
               升级会员
-            </Link>
+            </button>
           </div>
         </div>
 
