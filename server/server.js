@@ -93,6 +93,34 @@ const getErrorMessage = (key, lang = 'en') => {
   return errorMessages[lang]?.[key] || errorMessages.en[key];
 };
 
+// 添加API配置验证
+const validateApiConfig = () => {
+  const apiKey = process.env.API_KEY;
+  const apiEndpoint = process.env.API_ENDPOINT;
+  const apiModel = process.env.API_MODEL;
+
+  console.log('Validating API configuration:', {
+    hasApiKey: !!apiKey,
+    apiKeyLength: apiKey ? apiKey.length : 0,
+    apiEndpoint,
+    apiModel
+  });
+
+  if (!apiKey || apiKey === 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
+    throw new Error('API密钥未配置或使用了占位符');
+  }
+
+  if (!apiEndpoint) {
+    throw new Error('API端点未配置');
+  }
+
+  if (!apiModel) {
+    throw new Error('API模型未配置');
+  }
+
+  return { apiKey, apiEndpoint, apiModel };
+};
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 24 * 60 * 60 * 1000, // 24 hours
@@ -146,37 +174,25 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
     const imageBase64 = req.file.buffer.toString('base64');
     console.log('Image converted to base64, length:', imageBase64.length);
 
-    // Get API configuration from environment variables
-    const apiKey = process.env.API_KEY;
-    const apiEndpoint = process.env.API_ENDPOINT;
-    const apiModel = process.env.API_MODEL;
-
-    console.log('API Configuration:', {
-      hasApiKey: !!apiKey,
-      apiEndpoint,
-      apiModel,
-      apiKeyLength: apiKey ? apiKey.length : 0
-    });
-
-    if (!apiKey || !apiEndpoint || !apiModel) {
-      console.error('Missing API configuration:', {
-        hasApiKey: !!apiKey,
-        apiEndpoint,
-        apiModel
-      });
+    // 验证API配置
+    let apiConfig;
+    try {
+      apiConfig = validateApiConfig();
+    } catch (error) {
+      console.error('API configuration error:', error);
       updateTask(taskId, {
         status: TaskStatus.FAILED,
-        error: getErrorMessage('serverConfigError', lang)
+        error: error.message
       });
       return res.status(500).json({ 
-        error: getErrorMessage('serverConfigError', lang),
+        error: error.message,
         taskId: taskId
       });
     }
 
     // Prepare request payload
     const payload = {
-      model: apiModel,
+      model: apiConfig.apiModel,
       messages: [
         {
           role: 'user',
@@ -200,7 +216,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
     // Set request headers
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Authorization': `Bearer ${apiConfig.apiKey}`
     };
 
     // Send initial response with taskId to indicate processing started
@@ -216,7 +232,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
       try {
         // Log API request details
         console.log('API Request:', {
-          endpoint: apiEndpoint,
+          endpoint: apiConfig.apiEndpoint,
           headers: {
             ...headers,
             'Authorization': 'Bearer [REDACTED]'
@@ -245,7 +261,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-            const response = await fetch(apiEndpoint, {
+            const response = await fetch(apiConfig.apiEndpoint, {
               method: 'POST',
               headers: headers,
               body: JSON.stringify(payload),
@@ -275,9 +291,9 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
               console.error('Received HTML response instead of JSON:', htmlContent);
               updateTask(taskId, {
                 status: TaskStatus.FAILED,
-                error: getErrorMessage('invalidResponse', lang)
+                error: '服务器返回了HTML而不是JSON响应，请检查API配置'
               });
-              throw new Error(getErrorMessage('invalidResponse', lang));
+              throw new Error('服务器返回了HTML而不是JSON响应，请检查API配置');
             }
             
             if (response.ok) break;
@@ -288,16 +304,16 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
               if (retryCount === maxRetries) {
                 updateTask(taskId, {
                   status: TaskStatus.FAILED,
-                  error: `${getErrorMessage('serverError', lang)}: ${response.status}`
+                  error: `服务器错误: ${response.status}`
                 });
-                throw new Error(`${getErrorMessage('serverError', lang)}: ${response.status}`);
+                throw new Error(`服务器错误: ${response.status}`);
               }
               await new Promise(resolve => setTimeout(resolve, 5000 * retryCount));
               continue;
             }
             
             // 如果是客户端错误，直接抛出
-            const errorMessage = `${getErrorMessage('requestFailed', lang)}: ${response.status}`;
+            const errorMessage = `请求失败: ${response.status}`;
             updateTask(taskId, {
               status: TaskStatus.FAILED,
               error: errorMessage
@@ -309,7 +325,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
             if (retryCount === maxRetries) {
               updateTask(taskId, {
                 status: TaskStatus.FAILED,
-                error: error.message || getErrorMessage('processingFailed', lang)
+                error: error.message || '处理失败，请稍后重试'
               });
               throw error;
             }
@@ -324,9 +340,9 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
           console.error('API Error Response:', errorText);
           updateTask(taskId, {
             status: TaskStatus.FAILED,
-            error: `${getErrorMessage('requestFailed', lang)}: ${response.status}`
+            error: `请求失败: ${response.status}`
           });
-          throw new Error(`${getErrorMessage('requestFailed', lang)}: ${response.status}`);
+          throw new Error(`请求失败: ${response.status}`);
         }
 
         let result;
@@ -336,9 +352,9 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
           console.error('Failed to parse API response as JSON:', error);
           updateTask(taskId, {
             status: TaskStatus.FAILED,
-            error: getErrorMessage('invalidJson', lang)
+            error: '服务器返回了无效的JSON响应'
           });
-          throw new Error(getErrorMessage('invalidJson', lang));
+          throw new Error('服务器返回了无效的JSON响应');
         }
         
         // Process the API response and extract the generated image from choices
@@ -378,7 +394,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         
         if (!processedImage) {
           console.error('API Response Missing Image Data:', result);
-          throw new Error(getErrorMessage('noImageData', lang));
+          throw new Error('未找到图片数据');
         }
 
         // Update task status with the processed image
@@ -395,7 +411,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
         });
         updateTask(taskId, {
           status: TaskStatus.FAILED,
-          error: error.message || getErrorMessage('processingFailed', lang)
+          error: error.message || '处理失败，请稍后重试'
         });
       }
     })();
@@ -404,7 +420,7 @@ router.post('/process-image', upload.single('image'), async (req, res) => {
 
   } catch (error) {
     console.error('Error processing image:', error);
-    res.status(500).json({ error: getErrorMessage('processingFailed', lang) });
+    res.status(500).json({ error: error.message || '处理失败，请稍后重试' });
   }
 });
 
