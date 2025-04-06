@@ -46,6 +46,19 @@ const Home: React.FC = () => {
       const file = acceptedFiles[0];
       const formData = new FormData();
       formData.append('image', file);
+      
+      // 获取风格和提示词
+      const styleSelect = document.getElementById('style') as HTMLSelectElement;
+      const promptInput = document.getElementById('prompt') as HTMLInputElement;
+      const style = styleSelect.value;
+      const customPrompt = promptInput.value;
+      
+      if (style) {
+        formData.append('style', style);
+      }
+      if (customPrompt) {
+        formData.append('customPrompt', customPrompt);
+      }
 
       try {
         const response = await fetch('http://localhost:3000/api/process-image', {
