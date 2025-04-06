@@ -33,7 +33,6 @@ const Home: React.FC = () => {
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
@@ -253,19 +252,6 @@ const Home: React.FC = () => {
                           {t.process.button}
                         </button>
                       </form>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {isProcessing && (
-              <div className="w-full max-w-3xl">
-                <div className="bg-white shadow rounded-lg overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                      <span className="text-gray-700">{t.success.processing}</span>
                     </div>
                   </div>
                 </div>
